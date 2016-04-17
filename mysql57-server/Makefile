@@ -132,7 +132,8 @@ PERFSCHM_SUB_LIST_OFF+=	PERFSCHEMRC="--skip-performance-schema"
 .include <bsd.port.pre.mk>
 
 .if ${OPSYS} == FreeBSD && ${OSVERSION} < 1000000
-#WITH_OPENSSL_PORT=	yes
+# 'WITH_OPENSSL_PORT=yes' only can be used before "bsd.port.pre.mk"
+# Then, instead we use the woeks below
 OPENSSLBASE=		${LOCALBASE}
 OPENSSL_PORT?=		security/openssl
 OPENSSL_SHLIBVER?=	8
@@ -141,8 +142,6 @@ OPENSSLDIR?=		${OPENSSLBASE}/openssl
 BUILD_DEPENDS+=		${LOCALBASE}/lib/libcrypto.so.${OPENSSL_SHLIBVER}:${OPENSSL_PORT}
 RUN_DEPENDS+=		${LOCALBASE}/lib/libcrypto.so.${OPENSSL_SHLIBVER}:${OPENSSL_PORT}
 OPENSSLRPATH=		${LOCALBASE}/lib
-
-CMAKE_ARGS+=		-DFORCE_UNSUPPORTED_COMPILER=yes
 .endif
 
 CMAKE_ARGS+=		-DWITH_SSL=${OPENSSLBASE}
@@ -165,3 +164,14 @@ post-stage:
 .endif
 
 .include <bsd.port.post.mk>
+
+### XXX Dirty thing to make sure we use 'clang' on 9.3 ###
+### Otherwise build fails becuase of "error: Native atomics support not found!"
+.if ${OPSYS} == FreeBSD && ${OSVERSION} < 1000000
+FAVORITE_COMPILER=	clang
+CPP=			clang-cpp
+CC=			clang
+CXX=			clang++
+COMPILER_TYPE=		${FAVORITE_COMPILER}
+CHOSEN_COMPILER_TYPE=	${COMPILER_TYPE}
+.endif
